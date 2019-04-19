@@ -232,7 +232,10 @@ function getChallenger(dict) {
     for (i = 0; i < dict.length; i++) {
         if(dict[i]['pass'] == 0) {
             if(dict[i]['bid'] > challenger['bid'] ) {
-                    dict[i] = challenger
+                    console.log('well ' + dict[i]['bid'] + " is bigger than " + challenger['bid'] )
+                    challenger = dict[i]
+                    console.log('getChallenger will now return ')
+                    console.log(challenger)
             }
         }
     }
@@ -340,7 +343,11 @@ async function playerBidInc(socket, user, bid) {
          console.log('sending bid err to p= ' + p)
          io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too large. make another selection (max " + getMaxBid(usersRoom) + ")." });
     } else {
+        console.log('usersRoom before reassign is' )
+        console.log(usersRoom)
         currentUser['bid'] = bid
+        console.log('usersRoom after reassign is' )
+        console.log(usersRoom)
         console.log('new challenger is ')
         currentChallenger=getChallenger(usersRoom)
         console.log(currentChallenger)
