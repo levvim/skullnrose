@@ -187,6 +187,37 @@ function nextPlayer(num, length) {
     }
 }
 
+function nextPlayerBid(room, p) {
+    var usersRoomTemp=[]
+    //retrieve users that didnt pass yet
+    for(var i=0; i<users.length; i++) {
+        if(users[i]['room']==room){
+            if(users[i]['pass']==0){
+                usersRoomTemp.push(users[i])
+            }
+        }
+    }
+    console.log('nextplayerbid num ' + p + ' dict ' + usersRoomTemp.length)
+    //retrieve indice of p
+    var currentP
+    for(var i=0; i<usersRoomTemp.length; i++) {
+        if(usersRoomTemp[i]['p']==p){
+            currentP=i
+        }
+    }
+    if(usersRoomTemp.length==1) {
+        return false
+    }
+    if(currentP==usersRoomTemp.length-1) {
+            console.log('nextPlayerBid is floored to 0' )
+            return usersRoomTemp[0]['p']
+    } else {
+            currentP=currentP + 1
+            console.log('nextPlayerBid is ' + currentP)
+            return usersRoomTemp[currentP]['p']
+    }
+}
+
 async function sleep(num) {
         await sleep(num);
 }
@@ -273,15 +304,16 @@ function getWinState(socket, users, p) {
 async function playerSkull(socket, user) {
     usersRoom=getUsersRoom(user.room)
     currentUser=getUser(user.room, user.p)
-    console.log('recieved skull from' )
-    console.log(currentUser)
+    console.log('recieved skull' )
     if(currentUser['boardSkull'] < currentUser['skull'] ) {
         currentUser['boardSkull'] = currentUser['boardSkull'] + 1
         pushStack(user.room, user.p, 'skull')
+        console.log(currentUser)
         for (i = 0; i < usersRoom.length; i++) {
             console.log('sending prompt to ' + usersRoom[i]['socketid']  )
             await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " put down a disc." });
             await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a disc." });
+            await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:currentUser['p'], message:currentUser['stack'].length  });
         }
         p = nextPlayer(user.p, usersRoom.length)
         return serverTurn(socket, users, user.room, p)
@@ -294,15 +326,16 @@ async function playerSkull(socket, user) {
 async function playerRose(socket, user) {
     usersRoom=getUsersRoom(user.room)
     currentUser=getUser(user.room, user.p)
-    console.log('recieved rose from' )
-    console.log(currentUser)
+    console.log('recieved rose ' )
     if(currentUser['boardRose'] < currentUser['rose'] ) {
         currentUser['boardRose'] = currentUser['boardRose'] + 1
         pushStack(user.room, user.p, 'rose')
+        console.log(currentUser)
         for (i = 0; i < usersRoom.length; i++) {
             console.log('sending prompt to ' + usersRoom[i]['socketid']  )
             await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " put down a disc." });
             await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a disc." });
+            await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:currentUser['p'], message:currentUser['stack'].length  });
         }
         p = nextPlayer(user.p, usersRoom.length)
         return serverTurn(socket, users, user.room, p)
@@ -327,8 +360,6 @@ async function playerBidInc(socket, user, bid) {
     currentUser=getUser(user.room, user.p)
     currentChallenger=getChallenger(usersRoom)
 
-    console.log('current challenger is ' )
-    console.log(currentChallenger)
     console.log('maxBid is ' )
     console.log(getMaxBid(usersRoom))
     console.log('currentUser bid is ' )
@@ -338,55 +369,66 @@ async function playerBidInc(socket, user, bid) {
 
     if(bid <= currentChallenger['bid']) {
          console.log('sending bid err to p= ' + p)
-         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too small. make another selection (max " + getMaxBid(usersRoom) + ")." });
+         io.to(currentUser['socketid']).emit("playerTurnBid", { message: "bid is too small. make another selection (max " + getMaxBid(usersRoom) + ")." });
     } else if (bid > getMaxBid(usersRoom)) {
          console.log('sending bid err to p= ' + p)
-         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too large. make another selection (max " + getMaxBid(usersRoom) + ")." });
+         io.to(currentUser['socketid']).emit("playerTurnBid", { message: "bid is too large. make another selection (max " + getMaxBid(usersRoom) + ")." });
     } else {
-        console.log('usersRoom before reassign is' )
-        console.log(usersRoom)
         currentUser['bid'] = bid
-        console.log('usersRoom after reassign is' )
-        console.log(usersRoom)
-        console.log('new challenger is ')
         currentChallenger=getChallenger(usersRoom)
-        console.log(currentChallenger)
         for (i = 0; i < usersRoom.length; i++) {
             console.log('sending prompt to ' + usersRoom[i]['socketid']  )
             await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " put down a bid of " + bid + "." });
             await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a bid of " + bid + "." });
         }
-        p = nextPlayer(user.p, usersRoom.length)
         //updateChallengers, nextPlayerChallengers
+        if(bid==getMaxBid(usersRoom)){
+            return serverTurnSelection(socket, users, user.room, p)
+        } else {
+            p = nextPlayerBid(user.room, user.p)
+            return serverTurnBid(socket, users, user.room, p)
+        }
+    }
+}
+
+async function playerBidPass(socket, user) {
+    usersRoom=getUsersRoom(user.room)
+    currentUser=getUser(user.room, user.p)
+    currentChallenger=getChallenger(usersRoom)
+    currentUser['pass'] = 1
+
+    for (i = 0; i < usersRoom.length; i++) {
+        console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+        await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " passed." });
+        await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " passed." });
+    }
+    p = nextPlayerBid(user.room, user.p)
+    //updateChallengers, nextPlayerChallengers
+    if(p==false){
+        p=currentChallenger['p']
+        return serverTurnSelection(socket, users, user.room, p)
+    } else {
         return serverTurnBid(socket, users, user.room, p)
     }
 }
 
-//async function playerBidPass(socket, user, bid) {
-//    usersRoom=getUsersRoom(user.room)
-//    currentUser=getUser(user.room, user.p)
-//    currentChallenger=getChallenger(usersRoom)
-//    console.log('recieved bidInc from' )
-//    console.log(currentUser)
-//    currentUser['bid'] = bid
-//    console.log('current challenger is ' )
-//    console.log(currentChallenger)
-//    if(currentUser['bid'] == 0 || currentUser['bid'] <= currentChallenger['bid']) {
-//         console.log('sending bid err to p= ' + p)
-//         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too small. make another selection"  });
-//    } else if (currentUser['bid'] >= getMaxBid(usersRoom)) {
-//         console.log('sending bid err to p= ' + p)
-//         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too large. make another selection"  });
-//    } else {
-//        for (i = 0; i < usersRoom.length; i++) {
-//            console.log('sending prompt to ' + usersRoom[i]['socketid']  )
-//            await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " put down a bid of." + bid });
-//            await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a bid of " + bid "." });
-//        }
-//        p = nextPlayer(user.p, usersRoom.length)
-//        return serverTurnBid(socket, users, user.room, p)
-//    }
-//}
+async function playerSelection(socket, user, mat) {
+    usersRoom=getUsersRoom(user.room)
+    currentUser=getUser(user.room, user.p)
+    currentChallenger=getChallenger(usersRoom)
+
+    console.log('currentChallenger is ' )
+    console.log(currentChallenger)
+
+    if(currentChallenger['stack'].length != 0 && currentChallenger['p'] != mat) {
+        io.to(currentUser['socketid']).emit("playerTurnSelection", { message: "you must clear your mats out first." });
+    } else if(usersRoom[mat]['stack'].length == 0) {
+        io.to(currentUser['socketid']).emit("playerTurnSelection", { message: "you must choose a non-empty mat." });
+    } else {
+        console.log('correct mat of choice ' + mat)
+    }
+
+}
 
 async function serverTurn(socket, users, room,  p) {
     console.log('starting new turn p=' + p)
@@ -402,6 +444,7 @@ async function serverTurnBid(socket, users, room,  p) {
     usersRoom=getUsersRoom(room)
         // if bid turn () is complete then pass to serverturnselection fn
     // player turn
+        // TODO emit turn logs to only players in room w loop
     io.sockets.emit("prompt", { message: usersRoom[p]['name'] + "'s move.." });
     console.log('sending playerTurnBid to p=' + usersRoom[p]['p'] + " " + usersRoom[p]['socketid'])
     await io.to(usersRoom[p]['socketid']).emit("playerTurnBid", { message: "make your move "  });
@@ -410,10 +453,9 @@ async function serverTurnBid(socket, users, room,  p) {
 async function serverTurnSelection(socket, users, room,  p) {
     console.log('starting new selection turn p=' + p)
     usersRoom=getUsersRoom(room)
-    // player turn
+    console.log('sending playerTurnSelection to p=' + usersRoom[p]['p'] + " " + usersRoom[p]['socketid'])
     io.sockets.emit("prompt", { message: usersRoom[p]['name'] + "'s move.." });
-    console.log('sending playerTurnBid to p=' + usersRoom[p]['p'] + " " + usersRoom[p]['socketid'])
-    await io.to(usersRoom[p]['socketid']).emit("playerTurnBid", { message: "make your move "  });
+    await io.to(usersRoom[p]['socketid']).emit("playerTurnSelection", { message: "choose a mat. "  });
 }
 
 async function serverRound(socket, users, room, p) {
@@ -422,6 +464,7 @@ async function serverRound(socket, users, room, p) {
     // turn setup
     // reset game state
     await resetBoardState(usersRoom)
+    io.sockets.emit("resetBoardMats")
 
     return serverTurn(socket, users, room, p)
 }
@@ -511,6 +554,21 @@ io.sockets.on('connection', function (socket) {
         console.log(data.user['p'])
         console.log(data.bid)
         await playerBidInc(socket, data.user, data.bid)
+    })
+
+    socket.on("playerBidPass", async function(data) {
+        console.log("recieved bidPass from socket ")
+        console.log(data.user['socketid'])
+        console.log(data.user['p'])
+        await playerBidPass(socket, data.user)
+    })
+
+    socket.on("playerSelection", async function(data) {
+        console.log("recieved Selection from socket ")
+        console.log(data.user['socketid'])
+        console.log(data.user['p'])
+        console.log('player chose mat ' + data.mat)
+        await playerSelection(socket, data.user, data.mat)
     })
 
 });
