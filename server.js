@@ -140,7 +140,9 @@ var getUsersRoom = function(room) {
     var usersRoomTemp=[]
     for(var i=0; i<users.length; i++) {
         if(users[i]['room']==room){
-            usersRoomTemp.push(users[i])
+            if(users[i]['rose'] + users[i]['skull'] != 0){
+                usersRoomTemp.push(users[i])
+            }
         }
     }
     return usersRoomTemp
@@ -174,16 +176,28 @@ function randomStartPlayer(num) {
     return randomNumber;
 }
 
-function nextPlayer(num, length) {
-    length=length-1
-    console.log('nextplayer num ' + num + ' length ' + length)
-    if(num==length) {
+function nextPlayer(room, p) {
+    var usersRoomTemp=[]
+    for(var i=0; i<users.length; i++) {
+        if(users[i]['room']==room){
+            if(users[i]['rose'] + users[i]['skull'] != 0){
+                usersRoomTemp.push(users[i])
+            }
+        }
+    }
+    var currentP
+    for(var i=0; i<usersRoomTemp.length; i++) {
+        if(usersRoomTemp[i]['p']==p){
+            currentP=i
+        }
+    }
+    if(currentP==usersRoomTemp.length-1) {
             console.log('nextPlayer is floored to 0' )
-            return 0
+            return usersRoomTemp[0]['p']
     } else {
-            num=num + 1
-            console.log('nextPlayer is ' + num)
-            return num
+            currentP=currentP + 1
+            console.log('nextPlayer is ' + currentP)
+            return usersRoomTemp[currentP]['p']
     }
 }
 
@@ -193,7 +207,9 @@ function nextPlayerBid(room, p) {
     for(var i=0; i<users.length; i++) {
         if(users[i]['room']==room){
             if(users[i]['pass']==0){
-                usersRoomTemp.push(users[i])
+                if(users[i]['rose'] + users[i]['skull'] != 0){
+                    usersRoomTemp.push(users[i])
+                }
             }
         }
     }
@@ -286,20 +302,29 @@ function getUsersPass(dict) {
     }
 }
 
-function getWinState(socket, users, p) {
-    var i
-    var winner=0
-    for (i = 0; i < users.length; i++) {
-        if(users[i]['win'] == 2) {
-            winner=users[i]
-        }
+function removeDisc(dict) {
+    userStackTemp=[]
+    console.log("removing random disc for " + dict['name'])
+    for (i = 0; i < dict['skull']; i++) {
+        userStackTemp.push('s')
     }
-    if(winner != 0) {
-        serverRound(socket, users, p)
-    } else {
-        io.sockets.emit("prompt", { message: "<strong>" + winner['name'] + "</strong> wins!" });
+    for (i = 0; i < dict['rose']; i++) {
+        userStackTemp.push('r')
     }
+    const randomNumber = Math.floor(Math.random() * userStackTemp.length);
+    if(userStackTemp[randomNumber] == 'r') {
+        console.log('user lost a rose')
+        dict['rose'] = dict['rose'] - 1
+        console.log(dict)
+    }
+    if(userStackTemp[randomNumber] == 's') {
+        console.log('user lost a skull')
+        dict['rose'] = dict['rose'] - 1
+        console.log(dict)
+    }
+
 }
+
 
 async function playerSkull(socket, user) {
     usersRoom=getUsersRoom(user.room)
@@ -315,7 +340,7 @@ async function playerSkull(socket, user) {
             await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a disc." });
             await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:currentUser['p'], message:currentUser['stack'].length  });
         }
-        p = nextPlayer(user.p, usersRoom.length)
+        p = nextPlayer(user.room, user.p)
         return serverTurn(socket, users, user.room, p)
     } else {
          console.log('sending playerTurn err to p= ' + p)
@@ -337,7 +362,7 @@ async function playerRose(socket, user) {
             await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a disc." });
             await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:currentUser['p'], message:currentUser['stack'].length  });
         }
-        p = nextPlayer(user.p, usersRoom.length)
+        p = nextPlayer(user.room, user.p)
         return serverTurn(socket, users, user.room, p)
     } else {
          console.log('sending playerTurn err to p= ' + p)
@@ -422,12 +447,72 @@ async function playerSelection(socket, user, mat) {
 
     if(currentChallenger['stack'].length != 0 && currentChallenger['p'] != mat) {
         io.to(currentUser['socketid']).emit("playerTurnSelection", { message: "you must clear your mats out first." });
-    } else if(usersRoom[mat]['stack'].length == 0) {
+    } else if(usersRoom[mat]['stack'].length == 0 ) {
         io.to(currentUser['socketid']).emit("playerTurnSelection", { message: "you must choose a non-empty mat." });
     } else {
         console.log('correct mat of choice ' + mat)
-    }
+        matResult=usersRoom[mat]['stack'][usersRoom[mat]['stack'].length-1]
+        console.log('mat result is ' + matResult)
 
+        usersRoom[mat]['stack'].pop()
+
+        if(matResult == 'rose') {
+            currentUser['bid'] = currentUser['bid'] - 1
+
+            for (i = 0; i < usersRoom.length; i++) {
+                console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a rose. " + usersRoom[p]['name'] + " has " + usersRoom[p]['bid'] + " to go." });
+                await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a rose. " + usersRoom[p]['name'] + " has " + usersRoom[p]['bid'] + " to go." });
+                await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:mat, message:usersRoom[mat]['stack'].length  });
+            }
+            console.log(currentUser['name'] + "'s bid is now " + currentUser['bid'])
+            if(currentUser['bid'] == 0){
+                currentUser['win'] = currentUser['win'] + 1
+                updateUsers(user.room)
+                for (i = 0; i < usersRoom.length; i++) {
+                    console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                    await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " won the round!" });
+                    await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " won the round!" });
+                    await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:mat, message:usersRoom[mat]['stack'].length  });
+                }
+                if(currentUser['win'] == 2){
+                    for (i = 0; i < usersRoom.length; i++) {
+                        console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                        await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " won the game!" });
+                        await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " won the game!" });
+                    }
+                } else {
+                    return serverRound(socket, users, user.room, p)
+                }
+
+            } else {
+                return serverTurnSelection(socket, users, user.room, p)
+            }
+
+        }
+        if(matResult == 'skull') {
+            removeDisc(currentUser)
+            updateUsers(user.room)
+            for (i = 0; i < usersRoom.length; i++) {
+                console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a skull" });
+                await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a skull" });
+                await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " lost the round!" });
+                await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " lost the round!" });
+                await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:currentUser['p'], message:currentUser['stack'].length  });
+            }
+            if(currentUser['rose'] + currentUser['skull'] == 0) {
+                for (i = 0; i < usersRoom.length; i++) {
+                    console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                    await io.to(usersRoom[i]['socketid']).emit("prompt", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
+                    await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
+                }
+            } else {
+                await io.to(currentUser['socketid']).emit("log", { message:  "you have " + currentUser['skull'] + " skulls and " + currentUser['rose'] + " roses left."});
+                return serverRound(socket, users, user.room, p)
+            }
+        }
+    }
 }
 
 async function serverTurn(socket, users, room,  p) {
@@ -628,3 +713,18 @@ server.listen(process.env.PORT || 5000);
 //
 //                    // bid resolution
 //                })
+//
+//function getWinState(socket, users, p) {
+//    var i
+//    var winner=0
+//    for (i = 0; i < users.length; i++) {
+//        if(users[i]['win'] == 2) {
+//            winner=users[i]
+//        }
+//    }
+//    if(winner != 0) {
+//        serverRound(socket, users, p)
+//    } else {
+//        io.sockets.emit("prompt", { message: "<strong>" + winner['name'] + "</strong> wins!" });
+//    }
+//}
