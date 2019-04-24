@@ -22,10 +22,10 @@
   },
   "devDependencies": {
     "nodemon": "^1.18.11"
-  }
+  },
   "scripts": {
         "start": "node server.js"
-  }
+  },
   "engines": {
           "node": "8.9.3"
   }
