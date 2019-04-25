@@ -422,12 +422,72 @@ async function playerSelection(socket, user, mat) {
 
     if(currentChallenger['stack'].length != 0 && currentChallenger['p'] != mat) {
         io.to(currentUser['socketid']).emit("playerTurnSelection", { message: "you must clear your mats out first." });
-    } else if(usersRoom[mat]['stack'].length == 0) {
+    } else if(usersRoom[mat]['stack'].length == 0 ) {
         io.to(currentUser['socketid']).emit("playerTurnSelection", { message: "you must choose a non-empty mat." });
     } else {
         console.log('correct mat of choice ' + mat)
-    }
+        matResult=usersRoom[mat]['stack'][usersRoom[mat]['stack'].length-1]
+        console.log('mat result is ' + matResult)
 
+        usersRoom[mat]['stack'].pop()
+
+        if(matResult == 'rose') {
+            currentUser['bid'] = currentUser['bid'] - 1
+
+            for (i = 0; i < usersRoom.length; i++) {
+                console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a rose. " + usersRoom[p]['name'] + " has " + usersRoom[p]['bid'] + " to go." });
+                await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a rose. " + usersRoom[p]['name'] + " has " + usersRoom[p]['bid'] + " to go." });
+                await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:mat, message:usersRoom[mat]['stack'].length  });
+            }
+            console.log(currentUser['name'] + "'s bid is now " + currentUser['bid'])
+            if(currentUser['bid'] == 0){
+                currentUser['win'] = currentUser['win'] + 1
+                updateUsers(user.room)
+                for (i = 0; i < usersRoom.length; i++) {
+                    console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                    await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " won the round!" });
+                    await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " won the round!" });
+                    await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:mat, message:usersRoom[mat]['stack'].length  });
+                }
+                if(currentUser['win'] == 2){
+                    for (i = 0; i < usersRoom.length; i++) {
+                        console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                        await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " won the game!" });
+                        await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " won the game!" });
+                    }
+                } else {
+                    return serverRound(socket, users, user.room, p)
+                }
+
+            } else {
+                return serverTurnSelection(socket, users, user.room, p)
+            }
+
+        }
+        if(matResult == 'skull') {
+            removeDisc(currentUser)
+            updateUsers(user.room)
+            for (i = 0; i < usersRoom.length; i++) {
+                console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a skull" });
+                await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a skull" });
+                await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " lost the round!" });
+                await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " lost the round!" });
+                await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:currentUser['p'], message:currentUser['stack'].length  });
+            }
+            if(currentUser['rose'] + currentUser['skull'] == 0) {
+                for (i = 0; i < usersRoom.length; i++) {
+                    console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                    await io.to(usersRoom[i]['socketid']).emit("prompt", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
+                    await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
+                }
+            } else {
+                await io.to(currentUser['socketid']).emit("log", { message:  "you have " + currentUser['skull'] + " skulls and " + currentUser['rose'] + " roses left."});
+                return serverRound(socket, users, user.room, p)
+            }
+        }
+    }
 }
 
 async function serverTurn(socket, users, room,  p) {

@@ -1,6 +1,6 @@
 (function init() {
 
-// const socket = io.connect('http://localhost:5000');
+//const socket = io.connect('http://localhost:5000');
 const socket = io.connect('https://skullnrose.herokuapp.com');
 
 socket.on('connect', function() {
