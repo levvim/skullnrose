@@ -286,19 +286,27 @@ function getUsersPass(dict) {
     }
 }
 
-function getWinState(socket, users, p) {
-    var i
-    var winner=0
-    for (i = 0; i < users.length; i++) {
-        if(users[i]['win'] == 2) {
-            winner=users[i]
-        }
+function removeDisc(dict) {
+    userStackTemp=[]
+    console.log("removing random disc for " + dict['name'])
+    for (i = 0; i < dict['skull']; i++) {
+        userStackTemp.push('s')
     }
-    if(winner != 0) {
-        serverRound(socket, users, p)
-    } else {
-        io.sockets.emit("prompt", { message: "<strong>" + winner['name'] + "</strong> wins!" });
+    for (i = 0; i < dict['rose']; i++) {
+        userStackTemp.push('r')
     }
+    const randomNumber = Math.floor(Math.random() * userStackTemp.length);
+    if(userStackTemp[randomNumber] == 'r') {
+        console.log('user lost a rose')
+        dict['rose'] = dict['rose'] - 1
+        console.log(dict)
+    }
+    if(userStackTemp[randomNumber] == 's') {
+        console.log('user lost a skull')
+        dict['rose'] = dict['rose'] - 1
+        console.log(dict)
+    }
+
 }
 
 async function playerSkull(socket, user) {
