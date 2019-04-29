@@ -322,7 +322,6 @@ function removeDisc(dict) {
         dict['rose'] = dict['rose'] - 1
         console.log(dict)
     }
-
 }
 
 
@@ -377,7 +376,19 @@ async function playerBid(socket, user) {
     console.log(currentUser)
     console.log('maxBid is ' )
     console.log(getMaxBid(usersRoom))
-    io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "propose a bid (max " + getMaxBid(usersRoom) + ")."});
+
+    //check if there is at least 1 disc per mat
+    var count=0
+    for(var i=0; i<usersRoom.length; i++) {
+        count = count + parseInt(usersRoom[i]['boardSkull'])
+        count = count + parseInt(usersRoom[i]['boardRose'] )
+    }
+    console.log('there are currently ' + count + ' mats out')
+    if(count < usersRoom.length) {
+         io.to(currentUser['socketid']).emit("playerTurn", { message: "there has to be 1 disc out per player before proposing a bid." });
+    } else {
+        io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "propose a bid (max " + getMaxBid(usersRoom) + ")."});
+    }
 }
 
 async function playerBidInc(socket, user, bid) {
@@ -420,14 +431,16 @@ async function playerBidPass(socket, user) {
     usersRoom=getUsersRoom(user.room)
     currentUser=getUser(user.room, user.p)
     currentChallenger=getChallenger(usersRoom)
-    currentUser['pass'] = 1
 
     for (i = 0; i < usersRoom.length; i++) {
         console.log('sending prompt to ' + usersRoom[i]['socketid']  )
         await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " passed." });
         await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " passed." });
     }
+
     p = nextPlayerBid(user.room, user.p)
+    currentUser['pass'] = 1
+
     //updateChallengers, nextPlayerChallengers
     if(p==false){
         p=currentChallenger['p']
@@ -548,8 +561,11 @@ async function serverRound(socket, users, room, p) {
     usersRoom=getUsersRoom(room)
     // turn setup
     // reset game state
+        // TODO reset for only players in room w loop
+
     await resetBoardState(usersRoom)
     io.sockets.emit("resetBoardMats")
+    io.sockets.emit("resetBoard")
 
     return serverTurn(socket, users, room, p)
 }
