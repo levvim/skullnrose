@@ -7,14 +7,14 @@
   </head>
   <body>
       <div class="container">
-        <h1 id="title">skull & roses</h1>
+        <h1 id="title">s&r</h1>
 		<div class="menu">
+			<h1>s&r</h1>
 			<h3>How To</h3>
 			<ol>
-				<li>Create a new lobby by entering your username.</li>
-				<li>Other players can enter a lobby by providing their username and the lobby id.</li>
-				<li>Once users all players are in the lobby, click start/reset game at the bottom of the screen.</li>
-				<li>Enjoy.</li>
+				<li>Create a new lobby by entering your username</li>
+				<li>Other players can enter another username and the room id</li>
+				<li>Click on join lobby. </li>
 			</ol>
 			<h4>Create new lobby</h4>
 			<input type="text" name="name" id="nameNew" placeholder="Enter your name" >
@@ -24,33 +24,31 @@
 			<input type="text" name="name" id="nameJoin" placeholder="Enter your name">
 			<input type="text" name="room" id="room" placeholder="Enter Game ID">
 			<button id="join">Join Game</button>
-            <h6><strong>created by levvim</strong></h6>
-            <h6><strong><a href="https://github.com/levvim/skullnrose">github</a></strong></h6>
 		</div>
     	<div class="gameBoard">
     		<h2 id="gameAlert"></h2>
     		<h3 id="turn"></h3>
     		<table class="center">
     			<tr>
-    				<td><button class="displayTile" id="p4">p4</button></td>
-    				<td><button class="displayTile" id="p0">p0</button></td>
-    				<td><button class="displayTile" id="p1">p1</button></td>
+    				<td><button class="displayTile" id="p4"></button></td>
+    				<td><button class="displayTile" id="p0"></button></td>
+    				<td><button class="displayTile" id="p1"></button></td>
     			</tr>
     		</table>
     		<table class="center">
     			<tr>
-    				<td><button class="displayTile" id="p3">p3</button></td>
-    				<td><button class="displayTile" id="p2">p2</button></td>
+    				<td><button class="displayTile" id="p3"></button></td>
+    				<td><button class="displayTile" id="p2"></button></td>
     			</tr>
     		</table>
     		<h4 id="prompt"></h4>
     		<table class="choice">
     			<tr>
-    				<td><button class="choiceTile" id="skull">&#x2620</button></td>
-    				<td><button class="choiceTile" id="rose">&#x1F339</button></td>
-    				<td><button class="choiceTile" id="bid">&#x1F4B0</button></td>
-    				<td><button class="choiceTile" id="bidInc">&#x1F199</button></td>
-    				<td><button class="choiceTile" id="bidPass">&#x1F6D1</button></td>
+    				<td><button class="choiceTile" id="skull"></button></td>
+    				<td><button class="choiceTile" id="rose"></button></td>
+    				<td><button class="choiceTile" id="bid"></button></td>
+    				<td><button class="choiceTile" id="bidInc"></button></td>
+    				<td><button class="choiceTile" id="bidPass"></button></td>
     			</tr>
     		</table>
     		<table id="bidSliderTable">
@@ -63,9 +61,6 @@
             <div id="users"></div>
             <h6 id="log">log</h6>
             <button id="reset">start/reset</button>
-            <h6><strong>created by levvim</strong></h6>
-            <h6><strong><a href="https://github.com/levvim/skullnrose">github</a></strong></h6>
-		</div>
           </div>
         </div>
     <script src="node_modules/jquery/dist/jquery.min.js"></script>
