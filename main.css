@@ -12,6 +12,11 @@
     text-align: center;
 }
 
+.pTitle{
+	font-size: 12px;
+    text-align: center;
+}
+
 .gameBoard{
 	display: none;
 }

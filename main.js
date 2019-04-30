@@ -1,7 +1,7 @@
 (function init() {
 
-//const socket = io.connect('http://localhost:5000');
-const socket = io.connect('https://skullnrose.herokuapp.com');
+const socket = io.connect('http://localhost:5000');
+//const socket = io.connect('https://skullnrose.herokuapp.com');
 
 socket.on('connect', function() {
     console.log(socket.id)
@@ -19,6 +19,11 @@ window.onload = function() {
     var p2 = document.getElementById("p2");
     var p3 = document.getElementById("p3");
     var p4 = document.getElementById("p4");
+    var p0Title = document.getElementById("p0Title");
+    var p1Title = document.getElementById("p1Title");
+    var p2Title = document.getElementById("p2Title");
+    var p3Title = document.getElementById("p3Title");
+    var p4Title = document.getElementById("p4Title");
 
     var skull = document.getElementById("skull");
     var rose = document.getElementById("rose");
@@ -151,6 +156,26 @@ window.onload = function() {
       console.log(user)
     });
 
+    socket.on('assignPlayerTitle', function (data) {
+        switch(data.p){
+            case 0:
+                p0Title.innerHTML = data.name
+                break
+            case 1:
+                p1Title.innerHTML = data.name
+                break
+            case 2:
+                p2Title.innerHTML = data.name
+                break
+            case 3:
+                p3Title.innerHTML = data.name
+                break
+            case 4:
+                p4Title.innerHTML = data.name
+                break
+        }
+    });
+
     socket.on('resetBoard', function () {
         console.log('recieved resetBoard')
         skull.style.display="none"
@@ -168,6 +193,51 @@ window.onload = function() {
         p2.innerHTML = ""
         p3.innerHTML = ""
         p4.innerHTML = ""
+    });
+
+    socket.on('hideExtraMats', function (data) {
+        p0.style.display="initial"
+        p0Title.style.display="initial"
+        p1.style.display="initial"
+        p1Title.style.display="initial"
+        p2.style.display="initial"
+        p2Title.style.display="initial"
+        p3.style.display="initial"
+        p3Title.style.display="initial"
+        p4.style.display="initial"
+        p4Title.style.display="initial"
+        switch(data.pTotal){
+            case 1:
+                p1.style.display="none"
+                p1Title.style.display="none"
+                p2.style.display="none"
+                p2Title.style.display="none"
+                p3.style.display="none"
+                p3Title.style.display="none"
+                p4.style.display="none"
+                p4Title.style.display="none"
+                break
+            case 2:
+                p2.style.display="none"
+                p2Title.style.display="none"
+                p3.style.display="none"
+                p3Title.style.display="none"
+                p4.style.display="none"
+                p4Title.style.display="none"
+                break
+            case 3:
+                p3.style.display="none"
+                p3Title.style.display="none"
+                p4.style.display="none"
+                p4Title.style.display="none"
+                break
+            case 4:
+                p4.style.display="none"
+                p4Title.style.display="none"
+                break
+            case 5:
+                break
+        }
     });
 
     increaseValue.onclick = function() {

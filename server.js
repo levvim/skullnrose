@@ -519,6 +519,7 @@ async function playerSelection(socket, user, mat) {
                     console.log('sending prompt to ' + usersRoom[i]['socketid']  )
                     await io.to(usersRoom[i]['socketid']).emit("prompt", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
                     await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
+                    removeUser(currentUser)
                     return serverRound(socket, users, user.room, p)
                 }
             } else {
@@ -581,6 +582,8 @@ async function game(socket, users, room) {
     //say hello + assign players
     for (i = 0; i < usersRoom.length; i++) {
         usersRoom[i]['p'] = i
+        io.sockets.emit("hideExtraMats", { pTotal: usersRoom.length });
+        io.sockets.emit("assignPlayerTitle", { p: usersRoom[i]['p'], name: usersRoom[i]['name'] });
         io.to(usersRoom[i]['socketid']).emit("assignPlayer", { p: usersRoom[i]['p'] });
         io.to(usersRoom[i]['socketid']).emit("log", { message: "welcome to a new game " + usersRoom[i]['name'] + ". you are player " + usersRoom[i]['p'] + "." });
     }
