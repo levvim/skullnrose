@@ -1,15 +1,15 @@
 .displayTile{
-	width: 40px;
-	height: 40px;
-	font-size: 30px;
-	font-family: Helvetica;
+	width: 80px;
+	height: 80px;
+	font-size: 12px;
+    text-align: left;
 }
 
 .choiceTile{
-	width: 40px;
-	height: 40px;
-	font-size: 30px;
-	font-family: Helvetica;
+	width: 60px;
+	height: 60px;
+	font-size: 24px;
+    text-align: center;
 }
 
 .gameBoard{

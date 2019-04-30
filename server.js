@@ -385,7 +385,7 @@ async function playerBid(socket, user) {
     }
     console.log('there are currently ' + count + ' mats out')
     if(count < usersRoom.length) {
-         io.to(currentUser['socketid']).emit("playerTurn", { message: "there has to be 1 disc out per player before proposing a bid." });
+         io.to(currentUser['socketid']).emit("playerTurn", { message: "each player must put down a disc to start." });
     } else {
         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "propose a bid (max " + getMaxBid(usersRoom) + ")."});
     }
@@ -519,6 +519,7 @@ async function playerSelection(socket, user, mat) {
                     console.log('sending prompt to ' + usersRoom[i]['socketid']  )
                     await io.to(usersRoom[i]['socketid']).emit("prompt", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
                     await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
+                    return serverRound(socket, users, user.room, p)
                 }
             } else {
                 await io.to(currentUser['socketid']).emit("log", { message:  "you have " + currentUser['skull'] + " skulls and " + currentUser['rose'] + " roses left."});

@@ -138,7 +138,8 @@ window.onload = function() {
 
     // start game and game functions
     reset.onclick = async function() {
-        log.innerHTML = " "
+        var logText=""
+        log.innerHTML=logText
         socket.emit('reset', { room:user.room })
         console.log('reset')
     }
