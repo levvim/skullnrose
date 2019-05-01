@@ -531,15 +531,17 @@ async function playerSelection(socket, user, mat) {
                         await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[i]['name'] + " won the game!" });
                         await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[i]['name'] + " won the game!" });
                     }
+                } else {
+                    for (i = 0; i < usersRoom.length; i++) {
+                        usersRoom[i]['p'] = i
+                        io.sockets.emit("hideExtraMats", { pTotal: usersRoom.length });
+                        io.sockets.emit("assignPlayerTitle", { p: usersRoom[i]['p'], name: usersRoom[i]['name'] });
+                        io.to(usersRoom[i]['socketid']).emit("assignPlayer", { p: usersRoom[i]['p'] });
+                    }
+                
+                    p=randomStartPlayer(usersRoom.length) //starting player
+                    return serverRound(socket, users, user.room, p)
                 }
-                for (i = 0; i < usersRoom.length; i++) {
-                    usersRoom[i]['p'] = i
-                    io.sockets.emit("hideExtraMats", { pTotal: usersRoom.length });
-                    io.sockets.emit("assignPlayerTitle", { p: usersRoom[i]['p'], name: usersRoom[i]['name'] });
-                    io.to(usersRoom[i]['socketid']).emit("assignPlayer", { p: usersRoom[i]['p'] });
-                }
-                p=randomStartPlayer(usersRoom.length) //starting player
-                return serverRound(socket, users, user.room, p)
             } else {
                 await io.to(currentUser['socketid']).emit("log", { message:  "you have " + currentUser['skull'] + " skulls and " + currentUser['rose'] + " roses left."});
                 return serverRound(socket, users, user.room, p)
