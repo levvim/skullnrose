@@ -69,9 +69,11 @@ var addUser = function(name, room, socketid) {
 var removeUser = function(user) {
     for(var i=0; i<users.length; i++) {
         if(user.name === users[i].name) {
-            users.splice(i, 1);
-            updateUsers(user.room);
-            return;
+            if(users[i]['room'] == user.room){
+                users.splice(i, 1);
+                updateUsers(user.room);
+                return;
+            }
         }
     }
 }
@@ -319,7 +321,7 @@ function removeDisc(dict) {
     }
     if(userStackTemp[randomNumber] == 's') {
         console.log('user lost a skull')
-        dict['rose'] = dict['rose'] - 1
+        dict['skull'] = dict['skull'] - 1
         console.log(dict)
     }
 }
@@ -405,10 +407,10 @@ async function playerBidInc(socket, user, bid) {
 
     if(bid <= currentChallenger['bid']) {
          console.log('sending bid err to p= ' + p)
-         io.to(currentUser['socketid']).emit("playerTurnBid", { message: "bid is too small. make another selection (max " + getMaxBid(usersRoom) + ")." });
+         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too small. make another selection (max " + getMaxBid(usersRoom) + ")." });
     } else if (bid > getMaxBid(usersRoom)) {
          console.log('sending bid err to p= ' + p)
-         io.to(currentUser['socketid']).emit("playerTurnBid", { message: "bid is too large. make another selection (max " + getMaxBid(usersRoom) + ")." });
+         io.to(currentUser['socketid']).emit("playerTurnBidInitial", { message: "bid is too large. make another selection (max " + getMaxBid(usersRoom) + ")." });
     } else {
         currentUser['bid'] = bid
         currentChallenger=getChallenger(usersRoom)
@@ -519,9 +521,10 @@ async function playerSelection(socket, user, mat) {
                     console.log('sending prompt to ' + usersRoom[i]['socketid']  )
                     await io.to(usersRoom[i]['socketid']).emit("prompt", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
                     await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
-                    removeUser(currentUser)
                     return serverRound(socket, users, user.room, p)
                 }
+                removeUser(currentUser)
+                return serverRound(socket, users, user.room, p)
             } else {
                 await io.to(currentUser['socketid']).emit("log", { message:  "you have " + currentUser['skull'] + " skulls and " + currentUser['rose'] + " roses left."});
                 return serverRound(socket, users, user.room, p)
@@ -563,11 +566,11 @@ async function serverRound(socket, users, room, p) {
     usersRoom=getUsersRoom(room)
     // turn setup
     // reset game state
-        // TODO reset for only players in room w loop
-
     await resetBoardState(usersRoom)
-    io.sockets.emit("resetBoardMats")
-    io.sockets.emit("resetBoard")
+    for (i = 0; i < usersRoom.length; i++) {
+        await io.to(usersRoom[i]['socketid']).emit("resetBoardMats");
+        await io.to(usersRoom[i]['socketid']).emit("resetBoard");
+    }
 
     return serverTurn(socket, users, room, p)
 }

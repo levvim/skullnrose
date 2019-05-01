@@ -4,7 +4,6 @@
   "description": "",
   "main": "node server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
   "author": "github.com/levvim",
@@ -23,10 +22,7 @@
   "devDependencies": {
     "nodemon": "^1.18.11"
   },
-  "scripts": {
-        "start": "node server.js"
-  },
   "engines": {
-          "node": "8.9.3"
+    "node": "8.9.3"
   }
 }
