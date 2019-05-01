@@ -523,6 +523,22 @@ async function playerSelection(socket, user, mat) {
                     await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
                 }
                 removeUser(currentUser)
+                //reset game with the players that are left over (shorten lobby)
+                usersRoom=getUsersRoom(user.room)
+                if(usersRoom.length==1){
+                    for (i = 0; i < usersRoom.length; i++) {
+                        console.log('sending prompt to ' + usersRoom[i]['socketid']  )
+                        await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[i]['name'] + " won the game!" });
+                        await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[i]['name'] + " won the game!" });
+                    }
+                }
+                for (i = 0; i < usersRoom.length; i++) {
+                    usersRoom[i]['p'] = i
+                    io.sockets.emit("hideExtraMats", { pTotal: usersRoom.length });
+                    io.sockets.emit("assignPlayerTitle", { p: usersRoom[i]['p'], name: usersRoom[i]['name'] });
+                    io.to(usersRoom[i]['socketid']).emit("assignPlayer", { p: usersRoom[i]['p'] });
+                }
+                p=randomStartPlayer(usersRoom.length) //starting player
                 return serverRound(socket, users, user.room, p)
             } else {
                 await io.to(currentUser['socketid']).emit("log", { message:  "you have " + currentUser['skull'] + " skulls and " + currentUser['rose'] + " roses left."});
