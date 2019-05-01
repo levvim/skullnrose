@@ -521,7 +521,6 @@ async function playerSelection(socket, user, mat) {
                     console.log('sending prompt to ' + usersRoom[i]['socketid']  )
                     await io.to(usersRoom[i]['socketid']).emit("prompt", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
                     await io.to(usersRoom[i]['socketid']).emit("log", { message: currentUser['name'] + " is out of discs and is knocked out from the game." });
-                    return serverRound(socket, users, user.room, p)
                 }
                 removeUser(currentUser)
                 return serverRound(socket, users, user.room, p)
