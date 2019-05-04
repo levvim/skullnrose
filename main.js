@@ -25,6 +25,7 @@ window.onload = function() {
     var p3Title = document.getElementById("p3Title");
     var p4Title = document.getElementById("p4Title");
 
+    var addAI = document.getElementById("addAI");
     var skull = document.getElementById("skull");
     var rose = document.getElementById("rose");
     var bid = document.getElementById("bid");
@@ -147,6 +148,12 @@ window.onload = function() {
         log.innerHTML=logText
         socket.emit('reset', { room:user.room })
         console.log('reset')
+    }
+
+    addAI.onclick = async function() {
+        logText = user.name + " added an AI player<br />" + logText 
+        log.innerHTML=logText
+        socket.emit('joinGameAI', { room:user.room })
     }
 
     socket.on('assignPlayer', function(data) {
