@@ -146,6 +146,7 @@ window.onload = function() {
     reset.onclick = async function() {
         var logText=""
         log.innerHTML=logText
+        addAI.style.display="none"
         socket.emit('reset', { room:user.room })
         console.log('reset')
     }
