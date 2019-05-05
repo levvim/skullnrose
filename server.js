@@ -258,9 +258,8 @@ function nextPlayerBid(room, p) {
     }
     if(usersRoomTemp.length==1) {
         console.log('everyone passed. sending selection')
-        return 99999
-    }
-    if(currentP==usersRoomTemp.length-1) {
+        return 99
+    } else if(currentP==usersRoomTemp.length-1) {
             console.log('nextPlayerBid is floored to 0' )
             return usersRoomTemp[0]['p']
     } else {
@@ -378,11 +377,13 @@ async function playerTurnAI(socket, user) {
         userStackTemp.push('r')
     }
     //add slots for bidding
-    if(userStackTemp.length > 2 && count > usersRoom.length) {
-        userStackTemp.push('b')
-        userStackTemp.push('b')
-    } else if(count > usersRoom.length) {
-        userStackTemp.push('b')
+    if(count > usersRoom.length) {
+        if(userStackTemp.length > 2) {
+            userStackTemp.push('b')
+            userStackTemp.push('b')
+        } else {
+            userStackTemp.push('b')
+        }
     }
     console.log(userStackTemp)
     const randomNumber = Math.floor(Math.random() * userStackTemp.length);
@@ -393,7 +394,12 @@ async function playerTurnAI(socket, user) {
     if(userStackTemp[randomNumber] == 's') {
         console.log('AI chose to put down skull')
         await playerSkull(socket, user)
-    } else {
+    }
+    if(userStackTemp[randomNumber] == 'b') {
+        console.log('AI chose to bid')
+        await playerBid(socket, user)
+    }
+    if(userStackTemp.length == 0) {
         console.log('AI chose to bid')
         await playerBid(socket, user)
     }
@@ -499,7 +505,7 @@ async function playerRose(socket, user) {
 async function playerBid(socket, user) {
     usersRoom=getUsersRoom(user.room)
     currentUser=getUser(user.room, user.p)
-    console.log('recieved playerBid from' )
+    console.log('recieved playerBid from' + user['name'] )
     console.log('maxBid is ' )
     console.log(getMaxBid(usersRoom))
 
@@ -560,7 +566,7 @@ async function playerBidInc(socket, user, bid) {
 
 async function playerBidPass(socket, user) {
     usersRoom=getUsersRoom(user.room)
-    currentUser=getUser(user.room, user.p)
+    var currentUser=getUser(user.room, user.p)
     currentChallenger=getChallenger(usersRoom)
 
     for (i = 0; i < usersRoom.length; i++) {
@@ -570,10 +576,12 @@ async function playerBidPass(socket, user) {
     }
 
     p = nextPlayerBid(user.room, user.p)
+    console.log('p is ' + p)
     currentUser['pass'] = 1
+    console.log('p is ' + p)
 
     //updateChallengers, nextPlayerChallengers
-    if(p==99999){
+    if(p==99) {
         //determine challenger after everyone passed
         challenger = usersRoom[0]
         for (i = 0; i < usersRoom.length; i++) {
@@ -617,6 +625,7 @@ async function playerSelection(socket, user, mat) {
 
         if(matResult == 'rose') {
             currentUser['bid'] = currentUser['bid'] - 1
+            console.log(currentUser['name'] + "'s bid is now " + currentUser['bid'])
 
             for (i = 0; i < usersRoom.length; i++) {
                 console.log('sending prompt to ' + usersRoom[i]['socketid']  )
@@ -624,7 +633,7 @@ async function playerSelection(socket, user, mat) {
                 await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " chose " + usersRoom[mat]['name'] + "'s mat and got a rose. " + usersRoom[p]['name'] + " has " + usersRoom[p]['bid'] + " to go." });
                 await io.to(usersRoom[i]['socketid']).emit("updateBoard", { p:mat, message:usersRoom[mat]['stack'].length  });
             }
-            console.log(currentUser['name'] + "'s bid is now " + currentUser['bid'])
+
             if(currentUser['bid'] == 0){
                 currentUser['win'] = currentUser['win'] + 1
                 updateUsers(user.room)
@@ -643,7 +652,6 @@ async function playerSelection(socket, user, mat) {
                 } else {
                     return serverRound(socket, users, user.room, p)
                 }
-
             } else {
                 return serverTurnSelection(socket, users, user.room, p)
             }
