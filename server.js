@@ -258,7 +258,8 @@ function nextPlayerBid(room, p) {
     }
     if(usersRoomTemp.length==1) {
         console.log('everyone passed. sending selection')
-        return 99
+        return "99"
+        console.log('keeps going?')
     } else if(currentP==usersRoomTemp.length-1) {
             console.log('nextPlayerBid is floored to 0' )
             return usersRoomTemp[0]['p']
@@ -555,7 +556,20 @@ async function playerBidInc(socket, user, bid) {
             await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a bid of " + bid + "." });
         }
         //updateChallengers, nextPlayerChallengers
-        if(bid==getMaxBid(usersRoom)){
+        if(bid==getMaxBid(usersRoom)) {
+            return serverTurnSelection(socket, users, user.room, p)
+        } else if (p="99") {
+            console.log('p relational statement works')
+            //determine challenger after everyone passed
+            challenger = usersRoom[0]
+            for (i = 0; i < usersRoom.length; i++) {
+                if(usersRoom[i]['bid'] > challenger['bid'] ) {
+                        challenger = usersRoom[i]
+                }
+            }
+            console.log('currentChallenger is ' + challenger['name'] + ' bid ' + challenger['bid'] )
+            p=challenger['p']
+            console.log('starting selection for player ' + currentChallenger['name'] + ' bid ' + currentChallenger['bid'])
             return serverTurnSelection(socket, users, user.room, p)
         } else {
             p = nextPlayerBid(user.room, user.p)
@@ -569,19 +583,24 @@ async function playerBidPass(socket, user) {
     var currentUser=getUser(user.room, user.p)
     currentChallenger=getChallenger(usersRoom)
 
+        console.log('hello')
     for (i = 0; i < usersRoom.length; i++) {
         console.log('sending prompt to ' + usersRoom[i]['socketid']  )
         await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " passed." });
         await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " passed." });
     }
 
+    console.log(p)
+        console.log('hello')
+
     p = nextPlayerBid(user.room, user.p)
-    console.log('p is ' + p)
+    console.log(p)
     currentUser['pass'] = 1
-    console.log('p is ' + p)
+    console.log(p)
 
     //updateChallengers, nextPlayerChallengers
-    if(p==99) {
+    if(p=="99") {
+        console.log('p relational statement works')
         //determine challenger after everyone passed
         challenger = usersRoom[0]
         for (i = 0; i < usersRoom.length; i++) {
