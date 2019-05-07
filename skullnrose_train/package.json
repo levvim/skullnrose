@@ -1,0 +1,30 @@
+{
+  "name": "skullnrose",
+  "version": "1.0.0",
+  "description": "",
+  "main": "node server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "github.com/levvim",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.2",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "jquery": "^3.4.0",
+    "mongodb": "^3.2.3",
+    "moniker": "^0.1.2",
+    "node-schedule": "^1.3.2",
+    "skeleton": "^0.1.2",
+    "skeleton-css": "^2.0.4",
+    "socketio": "^1.0.0"
+  },
+  "devDependencies": {
+    "mongoose": "^5.5.6",
+    "nodemon": "^1.18.11"
+  },
+  "engines": {
+    "node": "8.9.3"
+  }
+}

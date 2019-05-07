@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>s&r</title>
+	<link rel="stylesheet" type="text/css" href="main.css">
+	<link rel="stylesheet" type="text/css" href="node_modules/skeleton-css/css/skeleton.css">
+  </head>
+  <body>
+      <div class="container">
+        <h1 id="title">skull &amp; rose</h1>
+		<div class="menu">
+			<h3>How To</h3>
+			<ol>
+				<li>Create a new lobby by entering your username.</li>
+				<li>Other players can enter a lobby by providing their username and the lobby id.</li>
+				<li>Once users all players are in the lobby, click start/reset game at the bottom of the screen.</li>
+				<li>Enjoy.</li>
+			</ol>
+			<h4>Create new lobby</h4>
+			<input type="text" name="name" id="nameNew" placeholder="Enter your name" >
+			<button id="new">New Game</button>
+			<br><br>
+			<h4>Join existing lobby</h4>
+			<input type="text" name="name" id="nameJoin" placeholder="Enter your name">
+			<input type="text" name="room" id="room" placeholder="Enter Game ID">
+			<button id="join">Join Game</button>
+            <h6><strong>created by levvim</strong></h6>
+            <h6><strong><a href="https://github.com/levvim/skullnrose">github</a></strong></h6>
+		</div>
+    	<div class="gameBoard">
+    		<h2 id="gameAlert"></h2>
+    		<h3 id="turn"></h3>
+    		<table class="center">
+    			<tr>
+                        <td><h6 class="pTitle" id="p4Title">player 4</h6><br><button class="displayTile" id="p4"></button></td>
+                        <td><h6 class="pTitle" id="p0Title">player 0</h6><br><button class="displayTile" id="p0"></button></td>
+                        <td><h6 class="pTitle" id="p1Title">player 1</h6><br><button class="displayTile" id="p1"></button></td>
+    			</tr>                                                        
+    		</table>                                                         
+    		<table class="center">                                           
+    			<tr>                                                         
+                        <td><h6 class="pTitle" id="p3Title">player 3</h6><br><button class="displayTile" id="p3"></button></td>
+                        <td><h6 class="pTitle" id="p2Title">player 2</h6><br><button class="displayTile" id="p2"></button></td>
+    			</tr>
+    		</table>
+    		<h4 id="prompt"></h4>
+    		<table class="choice">
+    			<tr>
+    				<td><button class="choiceTile" id="skull">&#x2620</button></td>
+    				<td><button class="choiceTile" id="rose">&#x1F339</button></td>
+    				<td><button class="choiceTile" id="bid">&#x1F4B0</button></td>
+    				<td><button class="choiceTile" id="bidInc">&#x1F199</button></td>
+    				<td><button class="choiceTile" id="bidPass">&#x1F6D1</button></td>
+    			</tr>
+    		</table>
+    		<table id="bidSliderTable">
+    			<tr>
+             		<td><button class="value-button" id="decreaseValue">-</button></td>
+                    <td><h2 id="bidSliderNum">2</h2></td>
+             		<td><button class="value-button" id="increaseValue">+</button></td>
+    			</tr>
+    		</table>
+            <div id="users"></div>
+            <h6 id="log">log</h6>
+            <button id="addAI">add AI player</button>
+            <button id="reset">start/reset</button>
+            <h6><strong>created by levvim</strong></h6>
+            <h6><strong><a href="https://github.com/levvim/skullnrose">github</a></strong></h6>
+		</div>
+          </div>
+        </div>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
