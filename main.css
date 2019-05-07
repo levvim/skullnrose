@@ -1,20 +1,24 @@
 .displayTile{
-	width: 80px;
-	height: 80px;
-	font-size: 12px;
+	width: 160px;
+	height: 160px;
+	font-size: 36px;
     text-align: left;
 }
 
 .choiceTile{
-	width: 60px;
-	height: 60px;
-	font-size: 24px;
+	width: 120px;
+	height: 120px;
+	font-size: 48px;
     text-align: center;
 }
 
 .pTitle{
 	font-size: 12px;
     text-align: center;
+}
+
+.log{
+	font-size: 10px;
 }
 
 .gameBoard{

@@ -1,18 +1,3 @@
-//const http = require("http").Server(app);
-//
-//var express = require('express');
-//var app = express();
-//var server = app.listen(8810);
-//var io = require('socket.io').listen(server);
-//var Moniker = require('moniker');
-//
-//const port = process.env.PORT || 8080;
-//var path = require('path')
-//
-//app.get("/", function(req, res) {
-//    res.sendFile(__dirname + "/index.html");
-//});
-
 const express = require('express');
 const path = require('path');
 
@@ -22,14 +7,100 @@ const io = require('socket.io')(server);
 var Moniker = require('moniker');
 var async = require("async");
 
-let rooms = 0;
+////mongodb
+//var mongoose = require('mongoose');
+//mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser: true});
+//
+//var db = mongoose.connection;
+//db.on('error', console.error.bind(console, 'connection error:'));
+//db.once('open', function() {
+//    console.log('mongoose connected')
+//});
+//
+////set up schema + db
+//var snr = new mongoose.Schema({
+//    userCurrent: {
+//        name: String,
+//        p: Number,
+//        skull: Number,
+//        rose: Number,
+//        boardRose: Number,
+//        boardSkull: Number,
+//        stack: [{type: String}],
+//        bid: Number,
+//        pass: Boolean,
+//        win: Number,
+//        ai: Boolean,
+//        room: String,
+//        socketid: String
+//    },
+//    userOthers: [{
+//        name: String,
+//        p: Number,
+//        skull: Number,
+//        rose: Number,
+//        boardRose: Number,
+//        boardSkull: Number,
+//        stack: [{type: String}],
+//        bid: Number,
+//        pass: Boolean,
+//        win: Number,
+//        ai: Boolean,
+//        room: String,
+//        socketid: String
+//    }, 
+//    {
+//        name: String,
+//        p: Number,
+//        skull: Number,
+//        rose: Number,
+//        boardRose: Number,
+//        boardSkull: Number,
+//        stack: [{type: String}],
+//        bid: Number,
+//        pass: Boolean,
+//        win: Number,
+//        ai: Boolean,
+//        room: String,
+//        socketid: String
+//    }], 
+//        turnType: Number, //1 for playerTurn 2 for playerBid 3 for playerSelection
+//        minBid: Number,
+//        maxBid: Number,
+//        win: Boolean
+//});
+//var snrLog = mongoose.model('snrLog', snr);
+//
+//function saveSnrLog (db, entry) {
+//    var entryTemp = new db(entry);
+//    entryTemp.save(function (err, entryTemp) {
+//       if (err) return console.error(err);
+//    });
+//}
+//
+//function viewSnrLog (db) {
+//    db.find(function (err, db) {
+//        if (err) return console.error(err);
+//        console.log(db);
+//    })
+//}
+//
+////saveSnrLog(snrLog, fluffy)
+////
+////console.log('viewing log')
+////viewSnrLog(snrLog)
 
+
+////////////////////////////////////////////////////////////////////////////////
+//express
 app.use(express.static('.'));
 
+//connect index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+let rooms = 0;
 var users = [];
 var usersRoom=[];
 var p=0;
@@ -552,14 +623,16 @@ async function playerBidInc(socket, user, bid) {
         currentChallenger=getChallenger(usersRoom)
         for (i = 0; i < usersRoom.length; i++) {
             console.log('sending prompt to ' + usersRoom[i]['socketid']  )
-            await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " put down a bid of " + bid + "." });
-            await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a bid of " + bid + "." });
+            await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " put down a bid of " + bid + " (" + "max " + getMaxBid(usersRoom) + ")."  });
+            await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " put down a bid of " + bid + " (" + "max " + getMaxBid(usersRoom) + ")."  });
         }
         //updateChallengers, nextPlayerChallengers
+        p = nextPlayerBid(user.room, user.p)
+        console.log('p is ' + p)
         if(bid==getMaxBid(usersRoom)) {
+            p = currentChallenger['p']
             return serverTurnSelection(socket, users, user.room, p)
-        } else if (p="99") {
-            console.log('p relational statement works')
+        } else if (p=="99") {
             //determine challenger after everyone passed
             challenger = usersRoom[0]
             for (i = 0; i < usersRoom.length; i++) {
@@ -572,7 +645,6 @@ async function playerBidInc(socket, user, bid) {
             console.log('starting selection for player ' + currentChallenger['name'] + ' bid ' + currentChallenger['bid'])
             return serverTurnSelection(socket, users, user.room, p)
         } else {
-            p = nextPlayerBid(user.room, user.p)
             return serverTurnBid(socket, users, user.room, p)
         }
     }
@@ -902,3 +974,57 @@ io.sockets.on('connection', function (socket) {
 });
 
 server.listen(process.env.PORT || 5000);
+
+//const http = require("http").Server(app);
+//
+//var express = require('express');
+//var app = express();
+//var server = app.listen(8810);
+//var io = require('socket.io').listen(server);
+//var Moniker = require('moniker');
+//
+//const port = process.env.PORT || 8080;
+//var path = require('path')
+//
+//app.get("/", function(req, res) {
+//    res.sendFile(__dirname + "/index.html");
+//});
+
+////mongodb
+//var mongoose = require('mongoose');
+//mongoose.connect('mongodb://localhost:27017/test', {useNewUrlParser: true});
+//
+//var db = mongoose.connection;
+//db.on('error', console.error.bind(console, 'connection error:'));
+//db.once('open', function() {
+//    console.log('mongoose connected')
+//});
+//
+////set up schema + db
+//var snr = new mongoose.Schema({
+//          name: String
+//});
+//var snrLog = mongoose.model('snrLog', snr);
+//
+//function saveSnrLog (db, entry) {
+//    var entryTemp = new db(entry);
+//    entryTemp.save(function (err, entryTemp) {
+//       if (err) return console.error(err);
+//    });
+//}
+//
+//function viewSnrLog (db) {
+//    db.find(function (err, db) {
+//        if (err) return console.error(err);
+//        console.log(db);
+//    })
+//}
+//
+//var fluffy = { name: 'fluffy' };
+//console.log(fluffy)
+//
+//saveSnrLog(snrLog, fluffy)
+//
+//console.log('viewing log')
+//viewSnrLog(snrLog)
+//

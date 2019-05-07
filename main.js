@@ -1,7 +1,7 @@
 (function init() {
 
-//const socket = io.connect('http://localhost:5000');
-const socket = io.connect('https://skullnrose.herokuapp.com');
+const socket = io.connect('http://localhost:5000');
+//const socket = io.connect('https://skullnrose.herokuapp.com');
 
 socket.on('connect', function() {
     console.log(socket.id)
@@ -85,7 +85,6 @@ window.onload = function() {
     });
 
     socket.on('log', function (data) {
-        console.log('recieved err')
         join = data.message
         join.innerHTML = logText
     });
