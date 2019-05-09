@@ -93,15 +93,23 @@ var saveTurn = async function(usersRoom, user, userState) {
     }
     currentTurn=clone({userCurrent: userTemp, userOthers: usersRoomTemp, userState: userStateTemp})
     Turn.push(currentTurn)
-    console.log("turn after addition")
-    console.log(JSON.stringify(Turn,null,2));
+    //console.log("turn after addition")
+//    console.log(JSON.stringify(Turn,null,2));
 }
 
-var saveGame = async function(usersRoomTemp, winner) {
-    console.log('turn saved as')
-    console.log(JSON.stringify(Turn, null, 2))
-    await saveSnrLog(snrLog, Turn)
-    
+var saveGame = async function(usersRoom, winner) {
+    //set winner
+    for(var i=0; i<Turn.length; i++) {
+        if(Turn[i]['userCurrent']['name']==winner['name']) {
+            Turn[i]['userState']['win']=1
+        }
+    }
+    console.log(JSON.stringify(Turn,null,2));
+    console.log("saving to db");
+
+    for(var i=0; i<Turn.length; i++) {
+        await saveSnrLog(snrLog, Turn[i])
+    }
     console.log('viewing log')
     await viewSnrLog(snrLog)
 }
@@ -138,9 +146,77 @@ var savePlayerRose= async function(user) {
     saveTurn(usersRoom, currentUser, userState)
 }
 
-var savePlayerInc
-var savePlayerPass
-var savePlayerSelection
+var savePlayerBid= async function(user) {
+    var usersRoom=getUsersRoom(user['room'])
+    var currentUser=getUser(user['room'], user['p'])
+    var userState = {
+        minBid: 0, //0 if no turnType!=3
+        maxBid: 0, //0 if no turnType!=3
+        turnType: 1, //1 for playerTurn 2 for playerBid 3 for playerSelection
+        turnChoice: 3, //1 for skull 2 for rose 3 for bid, 0 otherwise
+        bidChoice: 0, //1 for bidInc 2 for bidPass, 0 otherwise
+        bidAmt: 0, //Amount to bid if bidInc, 0 otherwise
+        selection: 99, //Selected mat, 99 if no selection
+        win: 0 //1 for win
+    }
+    saveTurn(usersRoom, currentUser, userState)
+}
+
+var savePlayerBidInc= async function(user, bid) {
+    var usersRoom=getUsersRoom(user['room'])
+    var currentUser=getUser(user['room'], user['p'])
+    var currentChallenger=getChallenger(usersRoom)
+    var maxBidTemp=getMaxBid(usersRoom)
+    var minBidTemp=currentChallenger['bid']+1
+    var bidTemp=bid
+    var userState = {
+        minBid: minBidTemp, //0 if no turnType!=3
+        maxBid: maxBidTemp, //0 if no turnType!=3
+        turnType: 2, //1 for playerTurn 2 for playerBid 3 for playerSelection
+        turnChoice: 0, //1 for skull 2 for rose 3 for bid, 0 otherwise
+        bidChoice: 1, //1 for bidInc 2 for bidPass, 0 otherwise
+        bidAmt: bidTemp, //Amount to bid if bidInc, 0 otherwise
+        selection: 99, //Selected mat, 99 if no selection
+        win: 0 //1 for win
+    }
+    saveTurn(usersRoom, currentUser, userState)
+}
+
+var savePlayerPass= async function(user) {
+    var usersRoom=getUsersRoom(user['room'])
+    var currentUser=getUser(user['room'], user['p'])
+    var currentChallenger=getChallenger(usersRoom)
+    var maxBidTemp=getMaxBid(usersRoom)
+    var minBidTemp=currentChallenger['bid']+1
+    var userState = {
+        minBid: minBidTemp, //0 if no turnType!=3
+        maxBid: maxBidTemp, //0 if no turnType!=3
+        turnType: 2, //1 for playerTurn 2 for playerBid 3 for playerSelection
+        turnChoice: 0, //1 for skull 2 for rose 3 for bid, 0 otherwise
+        bidChoice: 2, //1 for bidInc 2 for bidPass, 0 otherwise
+        bidAmt: 0, //Amount to bid if bidInc, 0 otherwise
+        selection: 99, //Selected mat, 99 if no selection
+        win: 0 //1 for win
+    }
+    saveTurn(usersRoom, currentUser, userState)
+}
+
+var savePlayerSelection = async function(user, mat) {
+    var usersRoom=getUsersRoom(user['room'])
+    var currentUser=getUser(user['room'], user['p'])
+    var matTemp=mat
+    var userState = {
+        minBid: 0, //0 if no turnType!=3
+        maxBid: 0, //0 if no turnType!=3
+        turnType: 3, //1 for playerTurn 2 for playerBid 3 for playerSelection
+        turnChoice: 0, //1 for skull 2 for rose 3 for bid, 0 otherwise
+        bidChoice: 0, //1 for bidInc 2 for bidPass, 0 otherwise
+        bidAmt: 0, //Amount to bid if bidInc, 0 otherwise
+        selection: matTemp, //Selected mat, 99 if no selection
+        win: 0 //1 for win
+    }
+    saveTurn(usersRoom, currentUser, userState)
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //express
@@ -512,18 +588,22 @@ async function playerTurnAI(socket, user) {
     const randomNumber = Math.floor(Math.random() * userStackTemp.length);
     if(userStackTemp[randomNumber] == 'r') {
         console.log('AI chose to put down rose')
+        await savePlayerRose(user)
         await playerRose(socket, user)
     }
     if(userStackTemp[randomNumber] == 's') {
         console.log('AI chose to put down skull')
+        await savePlayerSkull(user)
         await playerSkull(socket, user)
     }
     if(userStackTemp[randomNumber] == 'b') {
         console.log('AI chose to bid')
+        await savePlayerBid(user)
         await playerBid(socket, user)
     }
     if(userStackTemp.length == 0) {
         console.log('AI chose to bid')
+        await savePlayerBid(user)
         await playerBid(socket, user)
     }
 }
@@ -537,6 +617,7 @@ async function playerTurnBidInitialAI(socket, user) {
 
     const bid = Math.floor(Math.random() * (maxBid - minBid + 1)) + minBid;
     console.log(user.name + ' is bidding ' + bid)
+    await savePlayerBidInc(user, bid)
     await playerBidInc(socket, user, bid)
 }
 
@@ -552,6 +633,7 @@ async function playerTurnBidAI(socket, user) {
         await playerTurnBidInitialAI(socket,user)
     } else {
         console.log(user.name + ' is passing')
+        await savePlayerPass(user)
         await playerBidPass(socket,user)
     }
 }
@@ -576,6 +658,7 @@ async function playerTurnSelectionAI(socket, user) {
         selection=pStack[randomNumber]
         console.log('ai is picking mat ' + selection)
 
+        await savePlayerSelection(user, selection)
         await playerSelection(socket, user, selection)
     }
 }
@@ -791,6 +874,7 @@ async function playerSelection(socket, user, mat) {
                         await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[p]['name'] + " won the game!" });
                         await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[p]['name'] + " won the game!" });
                     }
+                    saveGame(usersRoom, user)
                 } else {
                     return serverRound(socket, users, user.room, p)
                 }
@@ -825,6 +909,8 @@ async function playerSelection(socket, user, mat) {
                         await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[i]['name'] + " won the game!" });
                         await io.to(usersRoom[i]['socketid']).emit("log", { message: usersRoom[i]['name'] + " won the game!" });
                     }
+                    console.log(usersRoom[0])
+                    saveGame(usersRoom, usersRoom[0])
                 } else {
                     for (i = 0; i < usersRoom.length; i++) {
                         usersRoom[i]['p'] = i
@@ -907,6 +993,7 @@ async function game(socket, users, room) {
     usersRoom=getUsersRoom(room)
 
     await resetGameState(usersRoom)
+    Turn=[]
 
     //say hello + assign players
     for (i = 0; i < usersRoom.length; i++) {
@@ -995,6 +1082,7 @@ io.sockets.on('connection', function (socket) {
         console.log("recieved bid from socket ")
         console.log(data.user['socketid'])
         console.log(data.user['p'])
+        await savePlayerBid(data.user)
         await playerBid(socket, data.user)
     })
 
@@ -1003,6 +1091,7 @@ io.sockets.on('connection', function (socket) {
         console.log(data.user['socketid'])
         console.log(data.user['p'])
         console.log(data.bid)
+        await savePlayerBidInc(data.user, data.bid)
         await playerBidInc(socket, data.user, data.bid)
     })
 
@@ -1010,6 +1099,7 @@ io.sockets.on('connection', function (socket) {
         console.log("recieved bidPass from socket ")
         console.log(data.user['socketid'])
         console.log(data.user['p'])
+        await savePlayerPass(data.user)
         await playerBidPass(socket, data.user)
     })
 
@@ -1018,6 +1108,7 @@ io.sockets.on('connection', function (socket) {
         console.log(data.user['socketid'])
         console.log(data.user['p'])
         console.log('player chose mat ' + data.mat)
+        await savePlayerSelection(data.user, data.mat)
         await playerSelection(socket, data.user, data.mat)
     })
 
@@ -1081,3 +1172,4 @@ server.listen(process.env.PORT || 5000);
 //console.log('viewing log')
 //viewSnrLog(snrLog)
 //
+///change pass to saveGame when the wincon is the only player left so that the winner is not the person's turn but the person who actually won
