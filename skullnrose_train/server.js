@@ -114,6 +114,7 @@ var saveGame = async function(usersRoom, winner) {
     //viewSnrLog(snrLog)
     console.log('log viewed')
     return null
+    console.log('eval past null')
 }
 
 var savePlayerSkull = async function(user) {
@@ -593,23 +594,24 @@ async function playerTurnAI(socket, user) {
     if(userStackTemp[randomNumber] == 'r') {
         console.log('AI chose to put down rose')
         await savePlayerRose(user)
-        await playerRose(socket, user)
+        return playerRose(socket, user)
     }
     if(userStackTemp[randomNumber] == 's') {
         console.log('AI chose to put down skull')
         await savePlayerSkull(user)
-        await playerSkull(socket, user)
+        return playerSkull(socket, user)
     }
     if(userStackTemp[randomNumber] == 'b') {
         console.log('AI chose to bid')
         await savePlayerBid(user)
-        await playerBid(socket, user)
+        return playerBid(socket, user)
     }
     if(userStackTemp.length == 0) {
         console.log('AI chose to bid')
         await savePlayerBid(user)
-        await playerBid(socket, user)
+        return playerBid(socket, user)
     }
+    console.log('TurnAI no resolve')
 }
 
 async function playerTurnBidInitialAI(socket, user) {
@@ -920,7 +922,7 @@ async function playerSelection(socket, user, mat) {
                 removeUser(currentUser)
                 //reset game with the players that are left over (shorten lobby)
                 usersRoom=getUsersRoom(user.room)
-                if(usersRoom.length==1){
+                if(usersRoom.length==1) {
                     for (i = 0; i < usersRoom.length; i++) {
                         console.log('sending prompt to ' + usersRoom[i]['socketid']  )
                         await io.to(usersRoom[i]['socketid']).emit("prompt", { message: usersRoom[i]['name'] + " won the game!" });
