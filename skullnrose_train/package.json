@@ -9,7 +9,7 @@
   "author": "github.com/levvim",
   "license": "ISC",
   "dependencies": {
-    "async": "^2.6.2",
+    "async": "^2.6.4",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "jquery": "^3.4.0",
